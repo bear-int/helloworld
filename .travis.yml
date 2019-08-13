@@ -1,0 +1,47 @@
+sudo: required
+language: node_js
+  - "9"
+dist: trusty
+branches:
+  only:
+  - master
+
+stages:
+  - name: Maintenance page ON
+  - name: Create snapshot
+  - name: Start migration
+
+cache:
+  directories:
+  - "$HOME/google-cloud-sdk/"
+  - node_modules
+
+before_install:
+  - npm install -g npm@latest
+  - npm install -g @angular/cli
+  - python2 -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
+
+  - gcloud version || true
+  - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash >/dev/null; fi
+  - source /home/travis/google-cloud-sdk/path.bash.inc
+  - gcloud --quiet version
+  - gcloud --quiet components update
+
+addons:
+  chrome: stable
+
+jobs:
+  fast_finish: true
+  include:
+    - stage: Maintenance page ON
+      if: "(branch != stage AND type = push)"
+      script: CLOUDFLARE_AUTH_EMAIL=$CLOUDFLARE_AUTH_EMAIL CLOUDFLARE_AUTH_KEY=$CLOUDFLARE_AUTH_KEY CLOUDFLARE_DOMAIN_NAME=$CLOUDFLARE_DOMAIN_NAME CLOUDFLARE_ZONE_ID=$CLOUDFLARE_ZONE_ID MAINTENANCE_PAGE=$MAINTENANCE_PAGE node commands/maintenance.js enable
+    
+    - stage: Create snapshot
+      if: "(branch != development AND type = push AND branch != stage)"
+      script: ./snapshot.sh
+    
+    - stage: Start migration
+      if: "(branch != development AND type = push AND branch != stage)"
+      script: npm run migration
+      after_failure: ./restore.sh
