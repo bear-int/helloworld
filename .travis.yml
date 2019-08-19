@@ -17,6 +17,7 @@ cache:
   - node_modules
 
 before_install:
+  - export TZ=Europe/Kiev
   - npm install -g npm@latest
   - npm install -g @angular/cli
   - python2 -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
