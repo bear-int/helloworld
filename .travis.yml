@@ -7,9 +7,9 @@ branches:
   - master
 
 stages:
-  - name: Maintenance page ON
-  - name: Create snapshot
-  - name: Start migration
+  # - name: Create snapshot
+  # - name: Start migration
+    - name: Deploy 
 
 cache:
   directories:
@@ -34,15 +34,14 @@ addons:
 jobs:
   fast_finish: true
   include:
-    - stage: Maintenance page ON
-      if: "(branch != stage AND type = push)"
-      script: CLOUDFLARE_AUTH_EMAIL=$CLOUDFLARE_AUTH_EMAIL CLOUDFLARE_AUTH_KEY=$CLOUDFLARE_AUTH_KEY CLOUDFLARE_DOMAIN_NAME=$CLOUDFLARE_DOMAIN_NAME CLOUDFLARE_ZONE_ID=$CLOUDFLARE_ZONE_ID MAINTENANCE_PAGE=$MAINTENANCE_PAGE node commands/maintenance.js enable
-    
-    - stage: Create snapshot
+    # - stage: Create snapshot
+    #   if: "(branch != development AND type = push AND branch != stage)"
+    #   script: ./snapshot.sh
+    # - stage: Start migration
+    #   if: "(branch != development AND type = push AND branch != stage)"
+    #   script: npm run migration
+    #   after_failure: ./restore.sh
+    - stage: Deploy
       if: "(branch != development AND type = push AND branch != stage)"
-      script: ./snapshot.sh
-    
-    - stage: Start migration
-      if: "(branch != development AND type = push AND branch != stage)"
-      script: npm run migration
-      after_failure: ./restore.sh
+      script: ./deploy.sh
+      
